@@ -1,5 +1,5 @@
 #ifndef SI5351_CONFIG_SEEK_HPP
-#ifndef SI5351_CONFIG_SEEK_HPP
+#define SI5351_CONFIG_SEEK_HPP
 
 #include <stdint.h>
 

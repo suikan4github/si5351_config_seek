@@ -27,9 +27,9 @@ Si5351Status Si5351ConfigSeek(
 
     if (output_freq > 150000000) // If output freq is > 150MHz
     {
-        SI5351_SYSLOG("Frequency is higher than 150MHz");
+        SI5351_SYSLOG(nullptr, "Frequency is higher than 150MHz");
 
-        SI5351_SYSLOG("Set the stage 2 to divid by 4 mode")
+        SI5351_SYSLOG(nullptr, "Set the stage 2 to divid by 4 mode")
         // enforce divide by 4 mode.
         // Note that followings are required by Si5351 data sheet.
         // In case of divide by 4 mode, the second stage have to be integer mode.
@@ -39,7 +39,7 @@ Si5351Status Si5351ConfigSeek(
         stage2_c = 1;
 
         // For output freq > 150MHz, r is set to 1;
-        SI5351_SYSLOG( "Set r as 1");
+        SI5351_SYSLOG(nullptr, "Set r as 1");
         r = 1;
 
         second_stage_divider = 4;
