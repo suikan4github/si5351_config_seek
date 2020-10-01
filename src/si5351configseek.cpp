@@ -1,7 +1,7 @@
 #include <si5351configseek.hpp>
-
+#define SI5351_DEBUG
 #define SI5351_ASSERT(x)
-#define SI5351_SYSLOG(x, y)
+#define SI5351_SYSLOG(x, ...)
 
 Si5351Status Si5351ConfigSeek(
     const int32_t xtal_freq,
@@ -25,11 +25,12 @@ Si5351Status Si5351ConfigSeek(
     SI5351_SYSLOG("Xtal Frequency is %d Hz", xtal_freq);
     SI5351_SYSLOG("Output Frequency is %d Hz", output_freq);
 
+    // Si5351 requires to set the div-by-4 mode if the output is higher than 150MHz
     if (output_freq > 150000000) // If output freq is > 150MHz
     {
-        SI5351_SYSLOG(nullptr, "Frequency is higher than 150MHz");
+        SI5351_SYSLOG(SI5351_DEBUG, "Frequency is higher than 150MHz");
 
-        SI5351_SYSLOG(nullptr, "Set the stage 2 to divid by 4 mode")
+        SI5351_SYSLOG(SI5351_DEBUG, "Set the stage 2 to divid by 4 mode")
         // enforce divide by 4 mode.
         // Note that followings are required by Si5351 data sheet.
         // In case of divide by 4 mode, the second stage have to be integer mode.
@@ -39,17 +40,79 @@ Si5351Status Si5351ConfigSeek(
         stage2_c = 1;
 
         // For output freq > 150MHz, r is set to 1;
-        SI5351_SYSLOG(nullptr, "Set r as 1");
         r = 1;
-
         second_stage_divider = 4;
     }
-    else
+    else if (output_freq > 100000000)
     {
-        // At first, roughly calculate the dividing value.
-        second_stage_divider = 1 + 600000000 / output_freq;
+        SI5351_SYSLOG(SI5351_DEBUG, "Frequency is higher than 100MHz");
+
+        SI5351_SYSLOG(SI5351_DEBUG, "Set the stage 2 to divid by 6 mode")
+
+        // divide by 6
+        div_by_4 = 0; // requed by Si5351 data sheet
+        stage2_a = 6;
+        stage2_b = 0;
+        stage2_c = 1;
+
+        // r is set to 1;
         r = 1;
+        second_stage_divider = 6;
+    }
+    else if (output_freq > 75000000)
+    {
+        SI5351_SYSLOG(SI5351_DEBUG, "Frequency is higher than 75MHz");
+
+        SI5351_SYSLOG(SI5351_DEBUG, "Set the stage 2 to divid by 8 mode")
+
+        // divide by 6
+        div_by_4 = 0; // requed by Si5351 data sheet
+        stage2_a = 8;
+        stage2_b = 0;
+        stage2_c = 1;
+
+        // r is set to 1;
+        r = 1;
+        second_stage_divider = 8;
+    }
+    else // output freq <= 100MHz.
+    {
+        SI5351_SYSLOG(SI5351_DEBUG, "Frequency is lower than or equal to 75MHz");
+
+        // Initial value of the output divider
+        r = 1;
+
+        // Seek the appropriate multisynth divider.
+
+        // At first, roughly calculate the dividing value. 600MHz is the lowest VCO freq.
+        second_stage_divider = 600000000 / output_freq;
+        // round up. Now, second_stage_divider * r * output_freq is bigger than 600MHz.
+        second_stage_divider++;
+
+        // The second stage divider have to be lower than or equal to 2048
+
+        while (second_stage_divider > 2048)
+        {
+            r *= 2;
+            // At first, roughly calculate the dividing value. 600MHz is the lowest VCO freq.
+            second_stage_divider = 600000000 / (r * output_freq);
+            // round up. Now, second_stage_divider * r * output_freq is bigger than 600MHz.
+            second_stage_divider++;
+        }
+
+        // divide by 6
+        div_by_4 = 0; // requed by Si5351 data sheet
+        stage2_a = second_stage_divider;
+        stage2_b = 0;
+        stage2_c = 1;
     }
 
+    SI5351_SYSLOG(SI5351_DEBUG, "r = %d", r);
+    SI5351_SYSLOG(SI5351_DEBUG, "stage2_a = %d", stage2_a);
+    SI5351_SYSLOG(SI5351_DEBUG, "stage2_b = %d", stage2_c);
+    SI5351_SYSLOG(SI5351_DEBUG, "stage2_c = %d", stage2_c);
+
+    int32_t vco_freq = output_freq * second_stage_divider * r;
+    SI5351_SYSLOG(SI5351_DEBUG, "VCO frequency = %d", vco_freq);
     return s5351Ok;
 }
