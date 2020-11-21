@@ -75,7 +75,7 @@ Si5351Status Si5351ConfigSeek(
         r = 1;
         second_stage_divider = 8;
     }
-    else // output freq <= 100MHz.
+    else // output freq <= 75MHz.
     {
         SI5351_SYSLOG(SI5351_DEBUG, "Frequency is lower than or equal to 75MHz");
 
@@ -109,10 +109,47 @@ Si5351Status Si5351ConfigSeek(
 
     SI5351_SYSLOG(SI5351_DEBUG, "r = %d", r);
     SI5351_SYSLOG(SI5351_DEBUG, "stage2_a = %d", stage2_a);
-    SI5351_SYSLOG(SI5351_DEBUG, "stage2_b = %d", stage2_c);
+    SI5351_SYSLOG(SI5351_DEBUG, "stage2_b = %d", stage2_b);
     SI5351_SYSLOG(SI5351_DEBUG, "stage2_c = %d", stage2_c);
 
     int32_t vco_freq = output_freq * second_stage_divider * r;
     SI5351_SYSLOG(SI5351_DEBUG, "VCO frequency = %d", vco_freq);
+
+    // fvco = fxtal * a + mod
+    //      = fxtal * ( a + mod / fxtal )
+    //      = fxtal * ( a + b / c)
+
+    stage1_a = vco_freq / xtal_freq;
+    stage1_b = vco_freq % xtal_freq;
+    stage1_c = xtal_freq;
+
+    // Do the Euclidean Algorithm to reduce the b and c
+    int gcd, remainder;
+    int x = stage1_b;
+    int y = stage1_c;
+
+    while (1)
+    {
+        remainder = x % y;
+
+        if (remainder == 0)
+        {
+            gcd = y;
+            break;
+        }
+        else
+        {
+            x = y;
+            y = remainder;
+        }
+    }
+
+    stage1_b /= gcd;
+    stage1_c /= gcd;
+
+    SI5351_SYSLOG(SI5351_DEBUG, "stage1_a = %d", stage1_a);
+    SI5351_SYSLOG(SI5351_DEBUG, "stage1_b = %d", stage1_b);
+    SI5351_SYSLOG(SI5351_DEBUG, "stage1_c = %d", stage1_c);
+
     return s5351Ok;
 }
