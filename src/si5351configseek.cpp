@@ -4,20 +4,20 @@
 #define SI5351_SYSLOG(x, ...)
 
 Si5351Status Si5351ConfigSeek(
-    const int32_t xtal_freq,
-    const int32_t output_freq,
+    const uint32_t xtal_freq,
+    const uint32_t output_freq,
     const bool integer_mode,
-    int32_t &stage1_a,
-    int32_t &stage1_b,
-    int32_t &stage1_c,
-    int32_t &stage2_a,
-    int32_t &stage2_b,
-    int32_t &stage2_c,
-    int32_t &div_by_4,
-    int32_t &r)
+    uint32_t &stage1_a,
+    uint32_t &stage1_b,
+    uint32_t &stage1_c,
+    uint32_t &stage2_a,
+    uint32_t &stage2_b,
+    uint32_t &stage2_c,
+    uint32_t &div_by_4,
+    uint32_t &r)
 {
     // Because the div_by_4 mode is tricky, keep second stage divider value here.
-    int32_t second_stage_divider;
+    uint32_t second_stage_divider;
 
     SI5351_ASSERT(output_freq > 2);         // must be higher than 2Hz.
     SI5351_ASSERT(200000000 > output_freq); // must be lower than or equal to 200MHz
@@ -112,7 +112,7 @@ Si5351Status Si5351ConfigSeek(
     SI5351_SYSLOG(SI5351_DEBUG, "stage2_b = %d", stage2_b);
     SI5351_SYSLOG(SI5351_DEBUG, "stage2_c = %d", stage2_c);
 
-    int32_t vco_freq = output_freq * second_stage_divider * r;
+    uint32_t vco_freq = output_freq * second_stage_divider * r;
     SI5351_SYSLOG(SI5351_DEBUG, "VCO frequency = %d", vco_freq);
 
     // fvco = fxtal * a + mod

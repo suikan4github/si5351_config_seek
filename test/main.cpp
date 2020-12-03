@@ -8,10 +8,10 @@
 
 int main()
 {
-    int32_t stage1_a, stage1_b, stage1_c;
-    int32_t stage2_a, stage2_b, stage2_c;
-    int32_t div_by_4;
-    int32_t r;
+    uint32_t stage1_a, stage1_b, stage1_c;
+    uint32_t stage2_a, stage2_b, stage2_c;
+    uint32_t div_by_4;
+    uint32_t r;
 
     for (int i = 100000; i < 120000000; i += 1000)
     {
