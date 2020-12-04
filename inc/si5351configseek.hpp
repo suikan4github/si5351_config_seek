@@ -11,17 +11,16 @@ enum Si5351Status
 
 /**
  * @brief Seek the appropriate configuration of the Si5351.
- * @param xtal_freq Input : Xtal frequency in Hz. Must be from 10MHz to 40Mhz.
- * @param output_freq Input : Output frequency in Hz. Must be from 2.5kHz 200MHz.
- * @param integer_mode Pass true if the output divide ratio must be integer. 
- * @param stage1_int Output : Parameter "a" of the PLL feedback divider. [15, 90]
- * @param stage1_num Output : Parameter "b" of the PLL feedback divider. [0, 1048575]
- * @param stage1_denom Output : Parameter "c" of the PLL feedback divider. [0, 1048575]
- * @param stage2_int Output : Parameter "a" of the stage 2 divider. [8, 2048]
- * @param stage2_num Output : Parameter "b" of the stage 2 divider. [0, 1048575]
- * @param stage2_denom Output : Parameter "c" of the stage 2 divider. [0, 1048575]
- * @param div_by_4 Output : 0b11 : div by 4 mode. 0b00 : div by other mode.
- * @param r_div Output : Output divider
+ * @param xtal_freq [IN] : Xtal frequency in Hz. Must be from 10MHz to 40Mhz.
+ * @param output_freq [IN] : Output frequency in Hz. Must be from 2.5kHz 200MHz.
+ * @param stage1_int [OUT] : Parameter "a" of the PLL feedback divider. [15, 90]
+ * @param stage1_num [OUT] : Parameter "b" of the PLL feedback divider. [0, 1048575]
+ * @param stage1_denom [OUT] : Parameter "c" of the PLL feedback divider. [0, 1048575]
+ * @param stage2_int [OUT] : Parameter "a" of the stage 2 divider. [8, 2048]
+ * @param stage2_num [OUT] : Parameter "b" of the stage 2 divider. [0, 1048575]
+ * @param stage2_denom [OUT] : Parameter "c" of the stage 2 divider. [0, 1048575]
+ * @param div_by_4 [OUT] : 0b11 : div by 4 mode. 0b00 : div by other mode.
+ * @param r_div [OUT] : Output divider
  * @details 
  * Calcurate an appropriate set of the PLL parameters for Si5351. See AN619 for detail of Si5351.
  * 
@@ -54,7 +53,6 @@ enum Si5351Status
 Si5351Status Si5351ConfigSeek(
     const uint32_t xtal_freq,
     const uint32_t output_freq,
-    const bool integer_mode,
     uint32_t &stage1_int,
     uint32_t &stage1_num,
     uint32_t &stage1_denom,
@@ -66,12 +64,12 @@ Si5351Status Si5351ConfigSeek(
 
 /**
  * @brief Pack the given data for the Si5351 dividers.
- * @param integer The integer part of the divider. See following details. 
- * @param numarator The numerator part of the divider. See following details. 
- * @param denominator The denominator part of the divider. See following details. 
- * @param div_by_4 0 for normal mode, 3 for div by 4 mode. Must be 0 for the PLL multiplier.
- * @param r_div The output divider value. Must be zero for the PLL multiplier. 
- * @param reg The packed regster. 
+ * @param integer [IN] The integer part of the divider. See following details. 
+ * @param numarator [IN] The numerator part of the divider. See following details. 
+ * @param denominator [IN] The denominator part of the divider. See following details. 
+ * @param div_by_4 [IN] 0 for normal mode, 3 for div by 4 mode. Must be 0 for the PLL multiplier.
+ * @param r_div [IN] The output divider value. Must be zero for the PLL multiplier. 
+ * @param reg [OUT] The packed regster. 
  * @details
  * Deta packing for the Si5351 divider. The data will be packed as following :
  * @li reg[0] = denominator[15:8]

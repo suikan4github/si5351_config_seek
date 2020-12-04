@@ -1,12 +1,15 @@
 #include <si5351configseek.hpp>
+#include <stdio.h>
+
 #define SI5351_DEBUG
-#define SI5351_ASSERT(x)
+#define SI5351_ASSERT(x) \
+    if (!(x))            \
+        printf("Assertion failed : %s, at line %d\n", #x, __LINE__);
 #define SI5351_SYSLOG(x, ...)
 
 Si5351Status Si5351ConfigSeek(
     const uint32_t xtal_freq,
     const uint32_t output_freq,
-    const bool integer_mode,
     uint32_t &stage1_int,
     uint32_t &stage1_num,
     uint32_t &stage1_denom,
@@ -152,4 +155,55 @@ Si5351Status Si5351ConfigSeek(
     SI5351_SYSLOG(SI5351_DEBUG, "stage1_denom = %d", stage1_denom);
 
     return s5351Ok;
+}
+
+void Si5351PackRegister(
+    const uint32_t integer,
+    const uint32_t numerator,
+    const uint32_t denominator,
+    const uint32_t div_by_4,
+    const uint32_t r_div,
+    uint8_t reg[8])
+{
+    // integer part must be no bigger than 18bits.
+    SI5351_ASSERT((integer & 0xFFFC0000) == 0)
+    // numarator and denominator part must be no bigger than 20bits.
+    SI5351_ASSERT((numerator & 0xFFF00000) == 0)
+    SI5351_ASSERT((denominator & 0xFFF00000) == 0)
+    // Right value of div by four must be 0 or 3
+    SI5351_ASSERT((div_by_4 == 0) || (div_by_4 == 3))
+
+    reg[0] = (denominator >> 8) & 0x00FF;          // extract [15:8]
+    reg[1] = (denominator)&0x00FF;                 // extract [7:0]
+    reg[3] = (integer >> 8) & 0x00FF;              // extract [15:8]
+    reg[4] = (integer)&0x00FF;                     // extract [7:0]
+    reg[5] = (((denominator) >> 16) & 0x0F) << 4 | // extract [19:16]
+             (numerator >> 16) & 0x0F;             // extract [19:16]
+    reg[6] = (numerator >> 8) & 0x00FF;            // extract [15:8]
+    reg[7] = (numerator)&0x00FF;                   // extract [7:0]
+
+    reg[2] = 0;
+
+    reg[2] |= (integer >> 16) & 0x03;
+    reg[2] |= div_by_4 << 2;
+
+    // Calcurate the field value for the r_div.
+    // The r_div is true divider value. That is the value of the 2^x.
+    // The field value mast be this "x". Following code seeks the x for r_div.
+    uint32_t field = 256; // 256 is an error value.
+
+    int value = 1;
+    for (int i = 0; i < 256; i++)
+    {
+        if (value == r_div)
+        {
+            field = i;
+            break;
+        }
+        else
+            value <<= 1;
+    }
+
+    SI5351_ASSERT(field != 256) // Make sure the field value is not error.
+    reg[2] |= field << 4;
 }
