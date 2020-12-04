@@ -7,14 +7,14 @@ Si5351Status Si5351ConfigSeek(
     const uint32_t xtal_freq,
     const uint32_t output_freq,
     const bool integer_mode,
-    uint32_t &stage1_a,
-    uint32_t &stage1_b,
-    uint32_t &stage1_c,
-    uint32_t &stage2_a,
-    uint32_t &stage2_b,
+    uint32_t &stage1_int,
+    uint32_t &stage1_num,
+    uint32_t &stage1_denom,
+    uint32_t &stage2_int,
+    uint32_t &stage2_num,
     uint32_t &stage2_c,
     uint32_t &div_by_4,
-    uint32_t &r)
+    uint32_t &r_div)
 {
     // Because the div_by_4 mode is tricky, keep second stage divider value here.
     uint32_t second_stage_divider;
@@ -35,12 +35,12 @@ Si5351Status Si5351ConfigSeek(
         // Note that followings are required by Si5351 data sheet.
         // In case of divide by 4 mode, the second stage have to be integer mode.
         div_by_4 = 3; // requed by Si5351 data sheet
-        stage2_a = 0;
-        stage2_b = 0;
+        stage2_int = 0;
+        stage2_num = 0;
         stage2_c = 1;
 
-        // For output freq > 150MHz, r is set to 1;
-        r = 1;
+        // For output freq > 150MHz, r_div is set to 1;
+        r_div = 1;
         second_stage_divider = 4;
     }
     else if (output_freq > 100000000)
@@ -51,12 +51,12 @@ Si5351Status Si5351ConfigSeek(
 
         // divide by 6
         div_by_4 = 0; // requed by Si5351 data sheet
-        stage2_a = 6;
-        stage2_b = 0;
+        stage2_int = 6;
+        stage2_num = 0;
         stage2_c = 1;
 
-        // r is set to 1;
-        r = 1;
+        // r_div is set to 1;
+        r_div = 1;
         second_stage_divider = 6;
     }
     else if (output_freq > 75000000)
@@ -67,12 +67,12 @@ Si5351Status Si5351ConfigSeek(
 
         // divide by 6
         div_by_4 = 0; // requed by Si5351 data sheet
-        stage2_a = 8;
-        stage2_b = 0;
+        stage2_int = 8;
+        stage2_num = 0;
         stage2_c = 1;
 
-        // r is set to 1;
-        r = 1;
+        // r_div is set to 1;
+        r_div = 1;
         second_stage_divider = 8;
     }
     else // output freq <= 75MHz.
@@ -80,53 +80,53 @@ Si5351Status Si5351ConfigSeek(
         SI5351_SYSLOG(SI5351_DEBUG, "Frequency is lower than or equal to 75MHz");
 
         // Initial value of the output divider
-        r = 1;
+        r_div = 1;
 
         // Seek the appropriate multisynth divider.
 
         // At first, roughly calculate the dividing value. 600MHz is the lowest VCO freq.
         second_stage_divider = 600000000 / output_freq;
-        // round up. Now, second_stage_divider * r * output_freq is bigger than 600MHz.
+        // round up. Now, second_stage_divider * r_div * output_freq is bigger than 600MHz.
         second_stage_divider++;
 
         // The second stage divider have to be lower than or equal to 2048
 
         while (second_stage_divider > 2048)
         {
-            r *= 2;
+            r_div *= 2;
             // At first, roughly calculate the dividing value. 600MHz is the lowest VCO freq.
-            second_stage_divider = 600000000 / (r * output_freq);
-            // round up. Now, second_stage_divider * r * output_freq is bigger than 600MHz.
+            second_stage_divider = 600000000 / (r_div * output_freq);
+            // round up. Now, second_stage_divider * r_div * output_freq is bigger than 600MHz.
             second_stage_divider++;
         }
 
         // divide by 6
         div_by_4 = 0; // requed by Si5351 data sheet
-        stage2_a = second_stage_divider;
-        stage2_b = 0;
+        stage2_int = second_stage_divider;
+        stage2_num = 0;
         stage2_c = 1;
     }
 
-    SI5351_SYSLOG(SI5351_DEBUG, "r = %d", r);
-    SI5351_SYSLOG(SI5351_DEBUG, "stage2_a = %d", stage2_a);
-    SI5351_SYSLOG(SI5351_DEBUG, "stage2_b = %d", stage2_b);
+    SI5351_SYSLOG(SI5351_DEBUG, "r_div = %d", r_div);
+    SI5351_SYSLOG(SI5351_DEBUG, "stage2_int = %d", stage2_int);
+    SI5351_SYSLOG(SI5351_DEBUG, "stage2_num = %d", stage2_num);
     SI5351_SYSLOG(SI5351_DEBUG, "stage2_c = %d", stage2_c);
 
-    uint32_t vco_freq = output_freq * second_stage_divider * r;
+    uint32_t vco_freq = output_freq * second_stage_divider * r_div;
     SI5351_SYSLOG(SI5351_DEBUG, "VCO frequency = %d", vco_freq);
 
     // fvco = fxtal * a + mod
     //      = fxtal * ( a + mod / fxtal )
     //      = fxtal * ( a + b / c)
 
-    stage1_a = vco_freq / xtal_freq;
-    stage1_b = vco_freq % xtal_freq;
-    stage1_c = xtal_freq;
+    stage1_int = vco_freq / xtal_freq;
+    stage1_num = vco_freq % xtal_freq;
+    stage1_denom = xtal_freq;
 
     // Do the Euclidean Algorithm to reduce the b and c
     int gcd, remainder;
-    int x = stage1_b;
-    int y = stage1_c;
+    int x = stage1_num;
+    int y = stage1_denom;
 
     while (1)
     {
@@ -144,12 +144,12 @@ Si5351Status Si5351ConfigSeek(
         }
     }
 
-    stage1_b /= gcd;
-    stage1_c /= gcd;
+    stage1_num /= gcd;
+    stage1_denom /= gcd;
 
-    SI5351_SYSLOG(SI5351_DEBUG, "stage1_a = %d", stage1_a);
-    SI5351_SYSLOG(SI5351_DEBUG, "stage1_b = %d", stage1_b);
-    SI5351_SYSLOG(SI5351_DEBUG, "stage1_c = %d", stage1_c);
+    SI5351_SYSLOG(SI5351_DEBUG, "stage1_a = %d", stage1_int);
+    SI5351_SYSLOG(SI5351_DEBUG, "stage1_num = %d", stage1_num);
+    SI5351_SYSLOG(SI5351_DEBUG, "stage1_denom = %d", stage1_denom);
 
     return s5351Ok;
 }
