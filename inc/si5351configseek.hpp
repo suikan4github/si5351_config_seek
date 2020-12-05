@@ -35,11 +35,10 @@ enum Si5351Status
  * @li Output Divider. 
  * 
  * In this configuration, we have two Multisynth Dividers. One is the 
- * second stage. And the other is the feedback divider of the PLL. Because
- * the Multisynth divider is a fractional divider. 
+ * second stage. And the other is the feedback divider of the PLL. 
  * 
  * This function seek the appropriate setting based on the following restriction:
- * @li Keep second stage as integer division, if the integer_mode parameter is true. 
+ * @li Keep second stage as integer division
  * @li Keep the PLL VCO frequency between 600 to 900MHz.
  * 
  * 

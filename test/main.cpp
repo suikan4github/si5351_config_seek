@@ -17,8 +17,8 @@ int main()
 
     // From input frequency 10Mhz to 30MHz by 5MHz step
     for (int xfreq = 10000000; xfreq < 35000000; xfreq += 5000000)
-        // test from 100Hz to 200MHz
-        for (int i = 100000; i < 200000000; i += 1)
+        // test from 3Hz to 200MHz
+        for (int i = 3; i < 200000000; i += 1)
         {
 
             Si5351ConfigSeek(
