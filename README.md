@@ -8,6 +8,7 @@ The library is tested by the combination of :
 - 3Hz to 200MHz output ( 1Hz step )
 
 # API
+Tow APIs are provided.
 ## Si5351ConfigSeek()
 ```C++
 Si5351Status Si5351ConfigSeek(
