@@ -7,6 +7,8 @@
         printf("Assertion failed : %s, at line %d\n", #x, __LINE__);
 #define SI5351_SYSLOG(x, ...)
 
+#define R_DIV_MUSB_BE_1_TO_128_AS_POWER_OF_TWO 256
+
 Si5351Status Si5351ConfigSeek(
     const uint32_t xtal_freq,
     const uint32_t output_freq,
@@ -190,10 +192,10 @@ void Si5351PackRegister(
     // Calcurate the field value for the r_div.
     // The r_div is true divider value. That is the value of the 2^x.
     // The field value mast be this "x". Following code seeks the x for r_div.
-    uint32_t field = 256; // 256 is an error value.
+    uint32_t field = R_DIV_MUSB_BE_1_TO_128_AS_POWER_OF_TWO; // 256 is an error value.
 
     int value = 1;
-    for (int i = 0; i < 256; i++)
+    for (int i = 0; i < 8; i++)
     {
         if (value == r_div)
         {
@@ -204,6 +206,6 @@ void Si5351PackRegister(
             value <<= 1;
     }
 
-    SI5351_ASSERT(field != 256) // Make sure the field value is not error.
+    SI5351_ASSERT(field != R_DIV_MUSB_BE_1_TO_128_AS_POWER_OF_TWO) // Make sure the field value is not error.
     reg[2] |= field << 4;
 }
